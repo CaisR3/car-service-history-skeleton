@@ -1,14 +1,12 @@
 package com.template
 
-import net.corda.core.contracts.*
-import net.corda.core.identity.AbstractParty
+import net.corda.core.contracts.CommandData
+import net.corda.core.contracts.Contract
+import net.corda.core.contracts.ContractState
+import net.corda.core.contracts.requireThat
 import net.corda.core.identity.Party
 import net.corda.core.transactions.LedgerTransaction
-import java.util.*
 
-// *****************
-// * Contract Code *
-// *****************
 class ServiceContract : Contract {
     // This is used to identify our contract when building a transaction
     companion object {
@@ -25,14 +23,14 @@ class ServiceContract : Contract {
         when(command.value) {
             is Commands.Request -> {
                 requireThat {
-                    // Lets allow everything through for this
+                    // Let's allow everything through for this.
                 }
             }
 
             is Commands.Service -> {
                 requireThat {
-                    "description is not empty" using (output.description.isNotEmpty())
-                    "both service provider and owner are required signers" using (command.signers.containsAll(listOf(output.owner.owningKey, output.serviceProvider.owningKey)))
+                    "description is not empty" using (output.servicesProvided != null)
+                    "service provider is a required signer" using (command.signers.contains(output.mechanic.owningKey))
                 }
             }
         }
@@ -45,13 +43,6 @@ class ServiceContract : Contract {
     }
 }
 
-// *********
-// * State *
-// *********
-data class CarState(val owner: Party, val VIN: Int, val registration: String, val manufacturer: String, val colour: String, override val linearId: UniqueIdentifier = UniqueIdentifier(registration)) : LinearState {
-    override val participants: List<AbstractParty> = listOf()
-}
-
-data class ServiceState(val owner: Party, val serviceProvider: Party, val registration: String, val description: String) : ContractState {
-    override val participants: List<AbstractParty> = listOf()
+data class ServiceState(val owner: Party, val mechanic: Party, val registration: String, val serviced: Boolean = false, val servicesProvided: String? = null) : ContractState {
+    override val participants = listOf(owner, mechanic)
 }

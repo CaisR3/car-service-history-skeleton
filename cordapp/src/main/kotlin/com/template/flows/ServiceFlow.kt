@@ -3,55 +3,35 @@ package com.template.flows
 import co.paralleluniverse.fibers.Suspendable
 import com.template.ServiceContract
 import com.template.ServiceState
+import net.corda.core.contracts.Command
 import net.corda.core.flows.*
 import net.corda.core.node.services.queryBy
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
+import net.corda.core.utilities.ProgressTracker
 
-// *********
-// * Flows *
-// *********
 @InitiatingFlow
 @StartableByRPC
-object ServiceFlow {
-    class Initiator(val registration: String, val description: String) : FlowLogic<SignedTransaction>() {
-        @Suspendable
-        override fun call(): SignedTransaction {
-            // Flow implementation goes here
-            val notary = serviceHub.networkMapCache.notaryIdentities.first()
+class ServiceFlow(val registration: String, val servicesProvided: String) : FlowLogic<SignedTransaction>() {
+    override val progressTracker = ProgressTracker()
 
-            val builder = TransactionBuilder(notary)
+    @Suspendable
+    override fun call(): SignedTransaction {
+        val serviceStates = serviceHub.vaultService.queryBy<ServiceState>().states
+        val existingServiceStateRef = serviceStates.singleOrNull { it.state.data.registration == registration }
+                ?: throw FlowException("No service record found")
+        val existingServiceState = existingServiceStateRef.state.data
+        val updatedServiceState = existingServiceState.copy(serviced = true, servicesProvided = servicesProvided)
 
-            val service = serviceHub.vaultService.queryBy<ServiceState>().states
-                    .singleOrNull { it.state.data.registration == registration } ?: throw FlowException("No service record found")
+        val command = Command(ServiceContract.Commands.Service(), ourIdentity.owningKey)
 
-            val newService = service.state.data.copy(description = description)
-            val owner = service.state.data.owner
+        val transactionBuilder = TransactionBuilder(existingServiceStateRef.state.notary)
+                .addInputState(existingServiceStateRef)
+                .addOutputState(updatedServiceState, ServiceContract.ID)
+                .addCommand(command)
 
-            builder
-                    .addInputState(service)
-                    .addOutputState(newService, ServiceContract.ID)
-                    .addCommand(ServiceContract.Commands.Service(), ourIdentity.owningKey, owner.owningKey)
+        val signedTransaction = serviceHub.signInitialTransaction(transactionBuilder)
 
-            val ptx = serviceHub.signInitialTransaction(builder)
-
-            val session = initiateFlow(owner)
-
-            val stx = subFlow(CollectSignaturesFlow(ptx, listOf(session)))
-
-            return subFlow(FinalityFlow(stx))
-        }
-    }
-
-    @InitiatedBy(Initiator::class)
-    class Responder(val counterpartySession: FlowSession) : FlowLogic<Unit>() {
-        @Suspendable
-        override fun call() {
-            val signTransactionFlow = object : SignTransactionFlow(counterpartySession) {
-                override fun checkTransaction(stx: SignedTransaction) {
-
-                }
-            }
-        }
+        return subFlow(FinalityFlow(signedTransaction))
     }
 }
