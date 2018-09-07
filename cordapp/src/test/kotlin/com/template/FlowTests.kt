@@ -1,6 +1,7 @@
 package com.template
 
 import com.template.flows.RequestFlow
+import com.template.flows.RequestServiceHistoryFlow
 import com.template.flows.ServiceFlow
 import net.corda.core.utilities.getOrThrow
 import net.corda.testing.node.MockNetwork
@@ -13,8 +14,10 @@ class FlowTests {
     private val network = MockNetwork(listOf("com.template"))
     private val a = network.createNode()
     private val b = network.createNode()
+    private val c = network.createNode()
     private val partyA = a.info.legalIdentities[0]
     private val partyB = b.info.legalIdentities[0]
+    private val partyC = c.info.legalIdentities[0]
 
     @Before
     fun setup() = network.runNetwork()
@@ -89,5 +92,23 @@ class FlowTests {
         assertEquals(registration, serviceStateOutput.registration)
         assertEquals(true, serviceStateOutput.serviced)
         assertEquals(servicesProvided, serviceStateOutput.servicesProvided)
+    }
+
+    @Test
+    fun `golden path request history`() {
+        val registration = "KR60 LWT"
+        val servicesProvided = "Oil filter changed."
+
+        val requestFlowFuture = a.startFlow(RequestFlow(partyB, registration))
+        network.runNetwork()
+        requestFlowFuture.getOrThrow()
+
+        val serviceFlowFuture = b.startFlow(ServiceFlow(registration, servicesProvided))
+        network.runNetwork()
+        serviceFlowFuture.getOrThrow()
+
+        val serviceHistoryRequestFlowFuture = b.startFlow(RequestServiceHistoryFlow(partyA))
+        network.runNetwork()
+        serviceHistoryRequestFlowFuture.getOrThrow()
     }
 }

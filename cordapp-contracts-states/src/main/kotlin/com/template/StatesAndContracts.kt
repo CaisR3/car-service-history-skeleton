@@ -23,7 +23,7 @@ class ServiceContract : Contract {
         when(command.value) {
             is Commands.Request -> {
                 requireThat {
-                    // Let's allow everything through for this.
+                    "owner is a required signer" using (command.signers.contains(output.owner.owningKey))
                 }
             }
 
@@ -31,6 +31,7 @@ class ServiceContract : Contract {
                 requireThat {
                     "description is not empty" using (output.servicesProvided != null)
                     "service provider is a required signer" using (command.signers.contains(output.mechanic.owningKey))
+                    "input is consumed and output created" using (input != null)
                 }
             }
         }
