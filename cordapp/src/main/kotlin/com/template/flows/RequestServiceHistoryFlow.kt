@@ -17,10 +17,5 @@ class RequestServiceHistoryFlow(val owner: Party) : FlowLogic<Unit>() {
     @Suspendable
     override fun call(): Unit {
 
-        val session = initiateFlow(owner)
-
-        val response =  session.receive<ServiceState>().unwrap { it }
-
-        print(response.registration + " " + response.servicesProvided)
     }
 }

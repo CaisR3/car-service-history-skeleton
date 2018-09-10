@@ -24,19 +24,8 @@ class RequestFlow(val mechanic: Party, val registration: String) : FlowLogic<Sig
 
         // For the purposes of this, we're just going to create our service record for the first time here.
         // Normally this would be pulled from our vault and would have been issued by manufacturer.
-        val requestState = ServiceState(
-                owner = ourIdentity,
-                mechanic = mechanic,
-                registration = registration)
+        val requestState = null
 
-        val command = Command(ServiceContract.Commands.Request(), ourIdentity.owningKey)
 
-        val transactionBuilder = TransactionBuilder(notary)
-                .addOutputState(requestState, ServiceContract.ID)
-                .addCommand(command)
-
-        val signedTransaction = serviceHub.signInitialTransaction(transactionBuilder)
-
-        return subFlow(FinalityFlow(signedTransaction))
     }
 }

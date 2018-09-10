@@ -19,8 +19,5 @@ class ProvideServiceHistoryFlow(val session: FlowSession) : FlowLogic<Unit>() {
     @Suspendable
     override fun call(): Unit {
 
-        val serviceStateRef = serviceHub.vaultService.queryBy<ServiceState>().states.first()
-
-        session.send(serviceStateRef.state.data)
     }
 }
