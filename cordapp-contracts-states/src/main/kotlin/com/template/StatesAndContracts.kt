@@ -1,9 +1,6 @@
 package com.template
 
-import net.corda.core.contracts.CommandData
-import net.corda.core.contracts.Contract
-import net.corda.core.contracts.ContractState
-import net.corda.core.contracts.requireThat
+import net.corda.core.contracts.*
 import net.corda.core.identity.Party
 import net.corda.core.transactions.LedgerTransaction
 
@@ -18,12 +15,13 @@ class ServiceContract : Contract {
 
     }
 
+
     // Used to indicate the transaction's intent.
     interface Commands : CommandData {
 
     }
 }
 
-data class ServiceState(val owner: Party) : ContractState {
+data class ServiceState(val owner: Party, override val linearId: UniqueIdentifier = UniqueIdentifier()) : LinearState {
     override val participants = listOf(owner)
 }

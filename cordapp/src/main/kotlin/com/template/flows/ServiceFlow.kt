@@ -17,6 +17,8 @@ class ServiceFlow(val registration: String, val servicesProvided: String) : Flow
 
     @Suspendable
     override fun call(): SignedTransaction {
+        val notary = serviceHub.networkMapCache.notaryIdentities.first()
+
 
     }
 }

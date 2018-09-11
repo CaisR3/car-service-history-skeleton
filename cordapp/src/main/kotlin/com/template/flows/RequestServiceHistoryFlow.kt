@@ -11,11 +11,11 @@ import net.corda.core.utilities.unwrap
 
 @InitiatingFlow
 @StartableByRPC
-class RequestServiceHistoryFlow(val owner: Party) : FlowLogic<Unit>() {
+class RequestServiceHistoryFlow(val owner: Party) : FlowLogic<String>() {
     override val progressTracker = ProgressTracker()
 
     @Suspendable
-    override fun call(): Unit {
+    override fun call(): String {
 
     }
 }

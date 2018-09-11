@@ -24,8 +24,7 @@ class RequestFlow(val mechanic: Party, val registration: String) : FlowLogic<Sig
 
         // For the purposes of this, we're just going to create our service record for the first time here.
         // Normally this would be pulled from our vault and would have been issued by manufacturer.
-        val requestState = null
-
+        val serviceState = null
 
     }
 }
